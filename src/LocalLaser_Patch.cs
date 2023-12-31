@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,33 +7,57 @@ namespace LaserClearing
 {
     public class LocalLaser_Patch
     {
+		public static bool Enable = true;
+		public static bool EnableLoot = true;
 		public static int MaxLaserCount = 3;
 		public static float Range = 40f;
+		public static int MiningTick = 60;
+		public static int CheckIntervalTick = 20;
+		public static double MiningPower = 6000; // 1000 per tick = 60kw in game
+		public static bool NoDestoryAudio = true;
 
-		static HashSet<int> miningVegeIds = new();
-		static List<int> laserIds = new();
+		static readonly HashSet<int> miningVegeIds = new();
+		static readonly HashSet<int> blockedVegeIds = new();
+		static readonly List<int> laserIds = new();
 
 		[HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), nameof(PlayerAction_Mine.GameTick))]
 		static void GameTick(PlayerAction_Mine __instance)
         {
-			Vector3 beginPos = __instance.player.mecha.skillCastRightL;
+			if (!Enable) return;
+			Mecha mecha = __instance.player.mecha;
+			Vector3 beginPos = mecha.skillCastRightL;
 			PlanetFactory factory = __instance.player.factory;
 
-			if (laserIds.Count < MaxLaserCount)
+			if (laserIds.Count < MaxLaserCount && GameMain.gameTick % CheckIntervalTick == 0)
 			{
 				int vegeId = GetClosestVegeId(factory, beginPos, Range);
 				if (vegeId != 0)
-                {
-					miningVegeIds.Add(vegeId);
-					laserIds.Add(StartLaser(factory, vegeId, beginPos));
+				{
+					ref var vege = ref factory.vegePool[vegeId];
+					VegeProto vegeProto = LDB.veges.Select((int)vege.protoId);
+					if (vegeProto != null && vegeProto.Type < EVegeType.Detail)
+					{
+						miningVegeIds.Add(vegeId);
+						laserIds.Add(StartLaser(factory, vegeId, beginPos));
+					}
+					else
+                    {
+						blockedVegeIds.Add(vegeId);
+					}
 				}
 			}
 			for (int i = laserIds.Count - 1; i >= 0; i--)
             {
-				int removeTargetId = ContinueLaser(factory, laserIds[i], beginPos, Range);
-				if (removeTargetId != 0)
+				if (ContinueLaser(factory, laserIds[i], beginPos, out int vegeId))
                 {
-					miningVegeIds.Remove(removeTargetId);
+					ref var vege = ref factory.vegePool[vegeId];
+					mecha.QueryEnergy(MiningPower, out double energyConsumed, out _);
+					mecha.coreEnergy -= energyConsumed;
+					mecha.MarkEnergyChange(5, -energyConsumed);
+				}
+				else
+				{
+					miningVegeIds.Remove(vegeId);
 					laserIds.RemoveAt(i);
 				}
 			}
@@ -44,9 +69,63 @@ namespace LaserClearing
 		public static void ClearAll()
         {
 			miningVegeIds.Clear();
+			blockedVegeIds.Clear();
 			laserIds.Clear();
 			StopAll();
 		}
+
+
+		[HarmonyPrefix]
+		[HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.KillVegeFinally))]
+		public static bool KillVegeFinally_Prefix(PlanetFactory __instance, int id)
+		{
+			if (GameMain.gameTick > 0L)
+			{
+				ref var vegeData = ref __instance.vegePool[id];
+				VegeProto vegeProto = LDB.veges.Select(vegeData.protoId);
+				if (vegeProto != null)
+				{
+					VFEffectEmitter.Emit(vegeProto.MiningEffect, __instance.vegePool[id].pos, __instance.vegePool[id].rot);
+					if (!NoDestoryAudio)
+						VFAudio.Create(vegeProto.MiningAudio, null, __instance.vegePool[id].pos, true, 1, -1, -1L);
+
+					if (EnableLoot) 
+					{
+						GetVegLoot(__instance, vegeData, vegeProto);
+					}
+				}
+			}
+			__instance.RemoveVegeWithComponents(id);
+			return false;
+		}
+
+		static void GetVegLoot(PlanetFactory factory, in VegeData vegeData, VegeProto vegeProto)
+        {
+			// From PlayerAction_Mine.GameTick()
+			DotNet35Random dotNet35Random = new DotNet35Random(vegeData.id + ((factory.planet.seed & 16383) << 14));
+			int queue = 0;
+			for (int j = 0; j < vegeProto.MiningItem.Length; j++)
+			{
+				if ((float)dotNet35Random.NextDouble() < vegeProto.MiningChance[j])
+				{
+					int itemId = vegeProto.MiningItem[j];
+					int itemCount = (int)(vegeProto.MiningCount[j] * (vegeData.scl.y * vegeData.scl.y) + 0.5f);
+					if (itemCount > 0 && LDB.items.Select(itemId) != null)
+					{
+						int addedCount = GameMain.mainPlayer.TryAddItemToPackage(itemId, itemCount, 0, true, 0, false);
+						GameMain.statistics.production.factoryStatPool[factory.index].AddProductionToTotalArray(itemId, itemCount);
+						GameMain.data.history.AddFeatureValue(2150000 + itemId, itemCount);
+						if (addedCount > 0)
+						{
+							UIItemup.Up(itemId, addedCount);
+							UIRealtimeTip.PopupItemGet(itemId, addedCount, vegeData.pos + vegeData.pos.normalized, queue++);
+						}
+					}
+				}
+			}
+		}
+
+
 
 		// Reference: TestSkillCasts
 
@@ -57,35 +136,42 @@ namespace LaserClearing
 			ptr.Start();
 			ptr.astroId = factory.planetId;
 			ptr.hitIndex = 4;
-			ptr.beginPos = beginPos;
-			ptr.endPos = vegeData.pos + vegeData.pos.normalized * SkillSystem.RoughHeightByModelIndex[vegeData.modelIndex] * 0.5f;
+			ptr.beginPos = vegeData.pos + vegeData.pos.normalized * SkillSystem.RoughHeightByModelIndex[vegeData.modelIndex] * 0.5f;
+			ptr.endPos = beginPos;
 			ptr.target.type = ETargetType.Vegetable;
 			ptr.target.id = vegeId;
-			ptr.damage = 0; // Dummy damage as only visual effects
-			ptr.damageScale = 0.1f; // TickSkillLogic: vfaudio.volumeMultiplier = Mathf.Min(1.5f, this.damageScale * 0.6f);
+
+			int maxHp = SkillSystem.HpMaxByModelIndex[vegeData.modelIndex];
+			int recoverHp = SkillSystem.HpRecoverByModelIndex[vegeData.modelIndex];
+			ptr.damage = (int)((maxHp / MiningTick + recoverHp)/0.75f + 1); // Kill the tree/stones after MiningTick 
+			ptr.damageScale = 0.75f; // TickSkillLogic: vfaudio.volumeMultiplier = Mathf.Min(1.5f, this.damageScale * 0.6f);
 			ptr.mask = ETargetTypeMask.NotPlayer;
+
+			// Replace laser sound with mining sound (123)
+			ref SkillSFXHolder ptr2 = ref GameMain.data.spaceSector.skillSystem.audio.AddPlanetAudio(123, 0f, ptr.astroId, ptr.beginPos);
+			ptr.sfxId = ptr2.id;
 			return ptr.id;
 		}
 
-		static int ContinueLaser(PlanetFactory factory, int laserId,  Vector3 beginPos, float rangeLimit)
+		static bool ContinueLaser(PlanetFactory factory, int laserId, Vector3 beginPos, out int vegeId)
         {
 			ref LocalLaserContinuous ptr = ref GameMain.data.spaceSector.skillSystem.localLaserContinuous.buffer[laserId];
-			ptr.beginPos = beginPos;
+			ptr.endPos = beginPos;
 			SkillTargetLocal target = ptr.target;
-			ref VegeData vegeData = ref factory.vegePool[target.id];
+			vegeId = target.id;
+			ref VegeData vegeData = ref factory.vegePool[vegeId];
 			if (vegeData.id == 0)
             {
 				ptr.Stop(GameMain.data.spaceSector.skillSystem);
-				return target.id;
+				return false;
 			}
-			//ptr.endPos = vegeData.pos + vegeData.pos.normalized * SkillSystem.RoughHeightByModelIndex[vegeData.modelIndex] * 0.5f;
-			ptr.endPos = vegeData.pos;
-			if (Vector3.SqrMagnitude(ptr.endPos - beginPos) > rangeLimit * rangeLimit)
+			ptr.beginPos = vegeData.pos + vegeData.pos.normalized * SkillSystem.RoughHeightByModelIndex[vegeData.modelIndex] * 0.5f;
+			if (Vector3.SqrMagnitude(ptr.endPos - beginPos) > Range * Range)
             {
 				ptr.Stop(GameMain.data.spaceSector.skillSystem);
-				return target.id;
+				return false;
 			}
-			return 0;
+			return true;
 		}
 
 		static void StopAll()
@@ -125,16 +211,24 @@ namespace LaserClearing
 					if (hashAddress != 0 && hashAddress >> 28 == 1) // ETargetType.Vegetable = 1
 					{
 						int vegeId = hashAddress & 268435455;
-						if (vegeId != 0 && !miningVegeIds.Contains(vegeId))
+						if (vegeId != 0 && !miningVegeIds.Contains(vegeId) && !blockedVegeIds.Contains(vegeId))
 						{
 							ref VegeData vege = ref vegePool[vegeId];
 							if (vege.id == vegeId)
 							{
-								float dist = Vector3.SqrMagnitude(vege.pos - centerPos);
-								if (dist < minDist)
+								VegeProto vegeProto = LDB.veges.Select(vege.protoId);
+								if (vegeProto != null && vegeProto.Type < EVegeType.Detail)
 								{
-									result = vegeId;
-									minDist = dist;
+									float dist = Vector3.SqrMagnitude(vege.pos - centerPos);
+									if (dist < minDist)
+									{
+										result = vegeId;
+										minDist = dist;
+									}
+								}
+								else
+								{
+									blockedVegeIds.Add(vegeId);
 								}
 							}
 						}
