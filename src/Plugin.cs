@@ -24,11 +24,16 @@ namespace LaserClearing
             Log = Logger;
             harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(LocalLaser_Patch));
+            harmony.PatchAll(typeof(UI_Patch));
+#if DEBUG
+            UI_Patch.OnEnableChanged();
+#endif
         }
 
         public void OnDestroy()
         {
             LocalLaser_Patch.ClearAll();
+            UI_Patch.OnDestory();
             harmony.UnpatchSelf();
             harmony = null;
         }
