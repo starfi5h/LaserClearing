@@ -30,6 +30,7 @@ namespace LaserClearing
 #endif
         }
 
+#if DEBUG
         public void OnDestroy()
         {
             LocalLaser_Patch.ClearAll();
@@ -37,6 +38,7 @@ namespace LaserClearing
             harmony.UnpatchSelf();
             harmony = null;
         }
+#endif
 
         public static void LoadConfigs()
         {

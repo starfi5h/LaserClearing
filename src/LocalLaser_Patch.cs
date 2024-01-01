@@ -24,9 +24,10 @@ namespace LaserClearing
 		static void GameTick(PlayerAction_Mine __instance)
         {
 			if (!Enable) return;
+			PlanetFactory factory = __instance.player.factory;
+			if (factory == null) return; // Don't run in space
 			Mecha mecha = __instance.player.mecha;
 			Vector3 beginPos = mecha.skillCastRightL;
-			PlanetFactory factory = __instance.player.factory;
 
 			if (laserIds.Count < MaxLaserCount && GameMain.gameTick % CheckIntervalTick == 0)
 			{
