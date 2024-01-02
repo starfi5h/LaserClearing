@@ -9,12 +9,14 @@ namespace LaserClearing
     {
 		public static bool Enable = true;
 		public static bool EnableLoot = true;
+		public static int RequiredSpace = 2;
 		public static int MaxLaserCount = 3;
 		public static float Range = 40f;
 		public static int MiningTick = 60;
 		public static int CheckIntervalTick = 20;
 		public static double MiningPower = 6000; // 1000 per tick = 60kw in game
 		public static bool DropOnly = true;
+		public static bool SpaceCapsule = false;
 		public static bool NoDestoryAudio = true;
 
 		static readonly Dictionary<int, bool> checkVeges = new(); // true: avaible target
@@ -31,11 +33,19 @@ namespace LaserClearing
 
 			if (laserIds.Count < MaxLaserCount && GameMain.gameTick % CheckIntervalTick == 0)
 			{
-				int vegeId = GetClosestVegeId(factory, beginPos, Range);
-				if (vegeId != 0)
+				if (CheckPlayerInventorySpace())
 				{
-					laserIds.Add(StartLaser(factory, vegeId, beginPos));
-					checkVeges[vegeId] = false; // Now targetting
+					UI_Patch.UpdateButtonStatus(UI_Patch.ButtonStatus.Normal);
+					int vegeId = GetClosestVegeId(factory, beginPos, Range);
+					if (vegeId != 0)
+					{
+						laserIds.Add(StartLaser(factory, vegeId, beginPos));
+						checkVeges[vegeId] = false; // Now targetting
+					}
+				}
+				else
+                {
+					UI_Patch.UpdateButtonStatus(UI_Patch.ButtonStatus.NotEnoughSpace);
 				}
 			}
 			for (int i = laserIds.Count - 1; i >= 0; i--)
@@ -54,6 +64,20 @@ namespace LaserClearing
 				}
 			}
 		}
+
+		private static bool CheckPlayerInventorySpace()
+        {
+			if (!EnableLoot) return true;
+			var grids = GameMain.mainPlayer.package.grids;
+			var spaceCount = 0;
+			for (int i = GameMain.mainPlayer.package.size - 1; i >=0; i--)
+            {
+				if (grids[i].count == 0) ++spaceCount;
+				if (spaceCount >= RequiredSpace) return true;
+            }
+			return false;
+        }
+
 
 		[HarmonyPostfix]
 		[HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
@@ -226,6 +250,11 @@ namespace LaserClearing
 								{
 									if (DropOnly && vegeProto.MiningItem.Length == 0)
                                     {
+										checkVeges[vegeId] = false;
+										continue;
+									}
+									if (vege.protoId == 9999 && !SpaceCapsule) // Found in NotifyOnVegetableMined
+									{
 										checkVeges[vegeId] = false;
 										continue;
 									}

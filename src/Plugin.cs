@@ -47,14 +47,16 @@ namespace LaserClearing
         public static void LoadConfigs()
         {
             LocalLaser_Patch.Enable = Instance.Config.Bind("General", "Enable", true, "Enable LaserClearing").Value;
-            LocalLaser_Patch.EnableLoot = Instance.Config.Bind("General", "EnableLoot", true, "Get drops from destroying trees and stones\n破坏的树木/石头时获取掉落物").Value;
+            LocalLaser_Patch.EnableLoot = Instance.Config.Bind("General", "EnableLoot", true, "Get drops from destroying trees and stones\n破坏树木/石头时获取掉落物").Value;
+            LocalLaser_Patch.RequiredSpace = Instance.Config.Bind("General", "RequiredSpace", 2, "Stop laser when there is not enough space in inventory\n物品栏保留格位,当空间不足时停止激光").Value;
             LocalLaser_Patch.MaxLaserCount = Instance.Config.Bind("Laser", "MaxCount", 3, "Maximum count of laser\n激光最大数量").Value;
             LocalLaser_Patch.Range = Instance.Config.Bind("Laser", "Range", 40f, "Maximum range of laser\n激光最远距离").Value;
             LocalLaser_Patch.MiningTick = Instance.Config.Bind("Laser", "MiningTick", 60, "Time to mine an object (tick)\n开采所需时间").Value;
             LocalLaser_Patch.CheckIntervalTick = Instance.Config.Bind("Laser", "CheckIntervalTick", 20, "Interval to check objects in range\n检查周期").Value;
             LocalLaser_Patch.MiningPower = Instance.Config.Bind("Laser", "MiningPower", 480f, "Power consumption  per laser (kW)\n激光耗能").Value / 60f * 1000f; // Vanilla: 640kW
             LocalLaser_Patch.DropOnly = Instance.Config.Bind("Target", "DropOnly", true, "Targets only objects with available drop\n只清除有掉落物的植被").Value;
-            Instance.Logger.LogDebug("LoadConfigs");
+            LocalLaser_Patch.SpaceCapsule = Instance.Config.Bind("Target", "SpaceCapsule", false, "Targets space capsule\n清除飞行仓").Value;
+            Instance.Logger.LogDebug($"LoadConfigs drop:{LocalLaser_Patch.DropOnly}");
         }
     }
 }
