@@ -49,6 +49,7 @@ namespace LaserClearing
             LocalLaser_Patch.MiningTick = Instance.Config.Bind("Laser", "MiningTick", 60, "Time to mine an object (tick)\n开采所需时间").Value;
             LocalLaser_Patch.CheckIntervalTick = Instance.Config.Bind("Laser", "CheckIntervalTick", 20, "Interval to check objects in range\n检查周期").Value;
             LocalLaser_Patch.MiningPower = Instance.Config.Bind("Laser", "MiningPower", 360f, "Power consumption  per laser (kW)\n激光耗能").Value / 60f * 100f;
+            LocalLaser_Patch.DropOnly = Instance.Config.Bind("Target", "DropOnly", true, "Targets only objects with available drop\n只清除有掉落物的植被").Value;
             Instance.Logger.LogDebug("LoadConfigs");
         }
     }

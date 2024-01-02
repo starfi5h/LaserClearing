@@ -14,10 +14,10 @@ namespace LaserClearing
 		public static int MiningTick = 60;
 		public static int CheckIntervalTick = 20;
 		public static double MiningPower = 6000; // 1000 per tick = 60kw in game
+		public static bool DropOnly = true;
 		public static bool NoDestoryAudio = true;
 
-		static readonly HashSet<int> miningVegeIds = new();
-		static readonly HashSet<int> blockedVegeIds = new();
+		static readonly Dictionary<int, bool> checkVeges = new(); // true: avaible target
 		static readonly List<int> laserIds = new();
 
 		[HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), nameof(PlayerAction_Mine.GameTick))]
@@ -34,17 +34,8 @@ namespace LaserClearing
 				int vegeId = GetClosestVegeId(factory, beginPos, Range);
 				if (vegeId != 0)
 				{
-					ref var vege = ref factory.vegePool[vegeId];
-					VegeProto vegeProto = LDB.veges.Select((int)vege.protoId);
-					if (vegeProto != null && vegeProto.Type < EVegeType.Detail)
-					{
-						miningVegeIds.Add(vegeId);
-						laserIds.Add(StartLaser(factory, vegeId, beginPos));
-					}
-					else
-                    {
-						blockedVegeIds.Add(vegeId);
-					}
+					laserIds.Add(StartLaser(factory, vegeId, beginPos));
+					checkVeges[vegeId] = false; // Now targetting
 				}
 			}
 			for (int i = laserIds.Count - 1; i >= 0; i--)
@@ -58,7 +49,7 @@ namespace LaserClearing
 				}
 				else
 				{
-					miningVegeIds.Remove(vegeId);
+					checkVeges.Remove(vegeId);
 					laserIds.RemoveAt(i);
 				}
 			}
@@ -69,8 +60,7 @@ namespace LaserClearing
 		[HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
 		public static void ClearAll()
         {
-			miningVegeIds.Clear();
-			blockedVegeIds.Clear();
+			checkVeges.Clear();
 			laserIds.Clear();
 			StopAll();
 		}
@@ -103,7 +93,7 @@ namespace LaserClearing
 		static void GetVegLoot(PlanetFactory factory, in VegeData vegeData, VegeProto vegeProto)
         {
 			// From PlayerAction_Mine.GameTick()
-			DotNet35Random dotNet35Random = new DotNet35Random(vegeData.id + ((factory.planet.seed & 16383) << 14));
+			var dotNet35Random = new DotNet35Random(vegeData.id + ((factory.planet.seed & 16383) << 14));
 			int queue = 0;
 			for (int j = 0; j < vegeProto.MiningItem.Length; j++)
 			{
@@ -212,14 +202,13 @@ namespace LaserClearing
 					if (hashAddress != 0 && hashAddress >> 28 == 1) // ETargetType.Vegetable = 1
 					{
 						int vegeId = hashAddress & 268435455;
-						if (vegeId != 0 && !miningVegeIds.Contains(vegeId) && !blockedVegeIds.Contains(vegeId))
-						{
-							ref VegeData vege = ref vegePool[vegeId];
-							if (vege.id == vegeId)
-							{
-								VegeProto vegeProto = LDB.veges.Select(vege.protoId);
-								if (vegeProto != null && vegeProto.Type < EVegeType.Detail)
-								{
+						if (vegeId != 0)
+						{							
+							if (checkVeges.TryGetValue(vegeId, out bool state)) // Vege is in cache
+                            {
+								if (state)
+                                {
+									ref VegeData vege = ref vegePool[vegeId];
 									float dist = Vector3.SqrMagnitude(vege.pos - centerPos);
 									if (dist < minDist)
 									{
@@ -227,10 +216,29 @@ namespace LaserClearing
 										minDist = dist;
 									}
 								}
-								else
+                            }
+							else
+                            {
+								// Check if the new vege is available target
+								ref VegeData vege = ref vegePool[vegeId];
+								VegeProto vegeProto = LDB.veges.Select(vege.protoId);
+								if (vege.id == vegeId && vegeProto != null)
 								{
-									blockedVegeIds.Add(vegeId);
+									if (DropOnly && vegeProto.MiningItem.Length == 0)
+                                    {
+										checkVeges[vegeId] = false;
+										continue;
+									}
+									float dist = Vector3.SqrMagnitude(vege.pos - centerPos);
+									if (dist < minDist)
+									{
+										result = vegeId;
+										minDist = dist;
+									}
+									checkVeges[vegeId] = true;
+									continue;
 								}
+								checkVeges[vegeId] = false;
 							}
 						}
 					}
