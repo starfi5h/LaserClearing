@@ -4,7 +4,9 @@ using HarmonyLib;
 using System.Reflection;
 
 [assembly: AssemblyTitle(LaserClearing.Plugin.NAME)]
+[assembly: AssemblyProduct(LaserClearing.Plugin.GUID)]
 [assembly: AssemblyVersion(LaserClearing.Plugin.VERSION)]
+[assembly: AssemblyFileVersion(LaserClearing.Plugin.VERSION)]
 
 namespace LaserClearing
 {
@@ -13,7 +15,7 @@ namespace LaserClearing
     {
         public const string GUID = "starfi5h.plugin.LaserClearing";
         public const string NAME = "LaserClearing";
-        public const string VERSION = "1.0.0";
+        public const string VERSION = "1.0.1";
 
         public static Plugin Instance;
         public static ManualLogSource Log;

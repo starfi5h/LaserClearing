@@ -1,7 +1,7 @@
 {
     "name": "LaserClearing",
     "description": "Use mecha laser to auto harvest trees and stones in range. 用机甲激光自动采集范围内的树木和石头",
-    "version_number": "1.0.0",
+    "version_number": "1.0.1",
     "website_url": "https://github.com/starfi5h/LaserClearing",
     "dependencies": [ "xiaoye97-BepInEx-5.4.17" ]
 }
