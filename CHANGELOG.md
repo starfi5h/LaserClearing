@@ -1,3 +1,6 @@
+### v1.0.2
+\- Add config `General`:`RequiredSpace`, `Target`:`SpaceCapsule`  
+
 ### v1.0.1
 \- Add config `Target`:`DropOnly`.  
 \- Fix MiningPower unit conversion.  
