@@ -17,7 +17,7 @@ namespace LaserClearing
         public static double MiningPower = 6000; // 1000 per tick = 60kw in game
         public static bool DropOnly = true;
         public static bool SpaceCapsule = false;
-        public static bool NoDestoryAudio = true;
+        public static bool EnableDestructionSFX = false;
 
         static readonly Dictionary<int, bool> checkVeges = new(); // true: avaible target
         static readonly List<int> laserIds = new();
@@ -101,7 +101,7 @@ namespace LaserClearing
                 if (vegeProto != null)
                 {
                     VFEffectEmitter.Emit(vegeProto.MiningEffect, __instance.vegePool[id].pos, __instance.vegePool[id].rot);
-                    if (!NoDestoryAudio)
+                    if (EnableDestructionSFX)
                         VFAudio.Create(vegeProto.MiningAudio, null, __instance.vegePool[id].pos, true, 1, -1, -1L);
 
                     if (EnableLoot)
@@ -158,8 +158,8 @@ namespace LaserClearing
 
             int maxHp = SkillSystem.HpMaxByModelIndex[vegeData.modelIndex];
             int recoverHp = SkillSystem.HpRecoverByModelIndex[vegeData.modelIndex];
-            ptr.damage = (int)((maxHp / MiningTick + recoverHp) / 0.75f + 1); // Kill the tree/stones after MiningTick 
-            ptr.damageScale = 0.75f; // TickSkillLogic: vfaudio.volumeMultiplier = Mathf.Min(1.5f, this.damageScale * 0.6f);
+            ptr.damage = (int)((maxHp / MiningTick + recoverHp) / 1.0f + 1); // Kill the tree/stones after MiningTick 
+            ptr.damageScale = 1.0f; // TickSkillLogic: vfaudio.volumeMultiplier = Mathf.Min(1.5f, this.damageScale * 0.6f);
             ptr.mask = ETargetTypeMask.NotPlayer;
 
             // Replace laser sound with mining sound (123)
