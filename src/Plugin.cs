@@ -15,7 +15,7 @@ namespace LaserClearing
     {
         public const string GUID = "starfi5h.plugin.LaserClearing";
         public const string NAME = "LaserClearing";
-        public const string VERSION = "1.0.2";
+        public const string VERSION = "1.0.3";
 
         public static Plugin Instance;
         public static ManualLogSource Log;

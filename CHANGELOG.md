@@ -1,3 +1,7 @@
+### v1.0.3
+\- Add config `Other`: `EnableDestructionSFX`
+\- Fix an error when teleporting to another planet.  
+
 ### v1.0.2
 \- Add config `General`:`RequiredSpace`, `Target`:`SpaceCapsule`  
 

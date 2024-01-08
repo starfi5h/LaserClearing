@@ -21,6 +21,7 @@ namespace LaserClearing
 
         static readonly Dictionary<int, bool> checkVeges = new(); // true: avaible target
         static readonly List<int> laserIds = new();
+        static int factoryIndex = -1;
 
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), nameof(PlayerAction_Mine.GameTick))]
         static void GameTick(PlayerAction_Mine __instance)
@@ -28,6 +29,8 @@ namespace LaserClearing
             if (!Enable) return;
             PlanetFactory factory = __instance.player.factory;
             if (factory == null) return; // Don't run in space
+            if (factoryIndex != factory.index) ClearAll();
+            factoryIndex = factory.index;
             Mecha mecha = __instance.player.mecha;
             Vector3 beginPos = mecha.skillCastRightL;
 
@@ -94,20 +97,20 @@ namespace LaserClearing
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.KillVegeFinally))]
         public static bool KillVegeFinally_Prefix(PlanetFactory __instance, int id)
         {
-            if (GameMain.gameTick > 0L)
-            {
-                ref var vegeData = ref __instance.vegePool[id];
-                VegeProto vegeProto = LDB.veges.Select(vegeData.protoId);
-                if (vegeProto != null)
-                {
-                    VFEffectEmitter.Emit(vegeProto.MiningEffect, __instance.vegePool[id].pos, __instance.vegePool[id].rot);
-                    if (EnableDestructionSFX)
-                        VFAudio.Create(vegeProto.MiningAudio, null, __instance.vegePool[id].pos, true, 1, -1, -1L);
+            if (GameMain.gameTick <= 0L || __instance.index != factoryIndex)
+                return true;
 
-                    if (EnableLoot)
-                    {
-                        GetVegLoot(__instance, vegeData, vegeProto);
-                    }
+            ref var vegeData = ref __instance.vegePool[id];
+            VegeProto vegeProto = LDB.veges.Select(vegeData.protoId);
+            if (vegeProto != null)
+            {
+                VFEffectEmitter.Emit(vegeProto.MiningEffect, __instance.vegePool[id].pos, __instance.vegePool[id].rot);
+                if (EnableDestructionSFX)
+                    VFAudio.Create(vegeProto.MiningAudio, null, __instance.vegePool[id].pos, true, 1, -1, -1L);
+
+                if (EnableLoot)
+                {
+                    GetVegLoot(__instance, vegeData, vegeProto);
                 }
             }
             __instance.RemoveVegeWithComponents(id);

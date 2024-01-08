@@ -10,7 +10,7 @@ Run the game one time to generate `BepInEx\config\starfi5h.plugin.LaserClearing.
 配置文件(.cfg)需要先运行过游戏一次才会出现。修改后需重启游戏才会生效。    
 
 ```
-## Settings file was created by plugin LaserClearing v1.0.2
+## Settings file was created by plugin LaserClearing v1.0.3
 ## Plugin GUID: starfi5h.plugin.LaserClearing
 
 [General]
@@ -20,8 +20,8 @@ Run the game one time to generate `BepInEx\config\starfi5h.plugin.LaserClearing.
 # Default value: true
 Enable = true
 
-## Get drops from destroying trees and stones
-## 破坏树木/石头时获取掉落物
+## Get drops from destroying trees and stones (including laser)
+## 破坏树木/石头时获取掉落物(包含激光)
 # Setting type: Boolean
 # Default value: true
 EnableLoot = true
@@ -52,8 +52,8 @@ Range = 40
 # Default value: 60
 MiningTick = 60
 
-## Interval to check objects in range
-## 检查周期
+## Interval to check objects in range (laser cool-down time)
+## 检查周期(激光冷却时间)
 # Setting type: Int32
 # Default value: 20
 CheckIntervalTick = 20
@@ -63,6 +63,14 @@ CheckIntervalTick = 20
 # Setting type: Single
 # Default value: 480
 MiningPower = 480
+
+[Other]
+
+## Play sounds when trees and stones get clear by laser
+## 激光清除树木/石头时播放音效
+# Setting type: Boolean
+# Default value: false
+EnableDestructionSFX = false
 
 [Target]
 
@@ -78,4 +86,3 @@ DropOnly = true
 # Default value: false
 SpaceCapsule = false
 ```
-
