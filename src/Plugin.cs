@@ -15,7 +15,7 @@ namespace LaserClearing
     {
         public const string GUID = "starfi5h.plugin.LaserClearing";
         public const string NAME = "LaserClearing";
-        public const string VERSION = "1.0.3";
+        public const string VERSION = "1.0.4";
 
         public static Plugin Instance;
         public static ManualLogSource Log;
@@ -46,12 +46,12 @@ namespace LaserClearing
 
         public static void LoadConfigs()
         {
-            LocalLaser_Patch.Enable = Instance.Config.Bind("General", "Enable", true, "Enable LaserClearing").Value;
-            LocalLaser_Patch.EnableLoot = Instance.Config.Bind("General", "EnableLoot", true, "Get drops from destroying trees and stones (including laser)\n破坏树木/石头时获取掉落物(包含激光)").Value;
+            LocalLaser_Patch.Enable = Instance.Config.Bind("General", "Enable", false, "Enable LaserClearing when starting the game\n进入游戏时启用激光").Value;
+            LocalLaser_Patch.EnableLoot = Instance.Config.Bind("General", "EnableLoot", true, "Get drops from destroying trees and stones when enable laser\n启用激光时,破坏树木/石头时会获取掉落物").Value;
             LocalLaser_Patch.RequiredSpace = Instance.Config.Bind("General", "RequiredSpace", 2, "Stop laser when there is not enough space in inventory\n物品栏保留空位,当空间不足时停止激光").Value;
             LocalLaser_Patch.MaxLaserCount = Instance.Config.Bind("Laser", "MaxCount", 3, "Maximum count of laser\n激光最大数量").Value;
             LocalLaser_Patch.Range = Instance.Config.Bind("Laser", "Range", 40f, "Maximum range of laser\n激光最远距离").Value;
-            LocalLaser_Patch.MiningTick = Instance.Config.Bind("Laser", "MiningTick", 60, "Time to mine an object (tick)\n开采所需时间").Value;
+            LocalLaser_Patch.MiningTick = Instance.Config.Bind("Laser", "MiningTick", 90, "Time to mine an object (tick)\n开采所需时间").Value;
             LocalLaser_Patch.CheckIntervalTick = Instance.Config.Bind("Laser", "CheckIntervalTick", 20, "Interval to check objects in range (laser cool-down time)\n检查周期(激光冷却时间)").Value;
             LocalLaser_Patch.MiningPower = Instance.Config.Bind("Laser", "MiningPower", 480f, "Power consumption per laser (kW)\n激光耗能").Value / 60f * 1000f; // Vanilla: 640kW
             LocalLaser_Patch.DropOnly = Instance.Config.Bind("Target", "DropOnly", true, "Targets only objects with available drop\n只清除有掉落物的植被").Value;

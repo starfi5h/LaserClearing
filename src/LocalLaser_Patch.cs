@@ -97,7 +97,7 @@ namespace LaserClearing
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.KillVegeFinally))]
         public static bool KillVegeFinally_Prefix(PlanetFactory __instance, int id)
         {
-            if (GameMain.gameTick <= 0L || __instance.index != factoryIndex)
+            if (!Enable || __instance.index != factoryIndex)
                 return true;
 
             ref var vegeData = ref __instance.vegePool[id];
