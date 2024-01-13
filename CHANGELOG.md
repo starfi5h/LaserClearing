@@ -1,3 +1,7 @@
+### v1.0.4
+\- Collect drop from destroyed tree/stone only when laser is enable.  
+\- Config `General`: `Enable` has been set to false. `MiningTick` has been set to 90.  
+
 ### v1.0.3
 \- Add config `Other`: `EnableDestructionSFX`
 \- Fix an error when teleporting to another planet.  

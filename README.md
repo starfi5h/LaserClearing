@@ -4,24 +4,26 @@
 Use mecha laser to auto-harvest trees and stones in range.  
 The toggle button is right next to the battery bar.  
 This mod is inspired by GreyHak's [DSP Drone Clearing](https://dsp.thunderstore.io/package/GreyHak/DSP_Drone_Clearing/).  
+激光启用/关闭按钮在机甲能量条的右侧  
 
 ## Configuration
 Run the game one time to generate `BepInEx\config\starfi5h.plugin.LaserClearing.cfg` file.  
 配置文件(.cfg)需要先运行过游戏一次才会出现。修改后需重启游戏才会生效。    
 
 ```
-## Settings file was created by plugin LaserClearing v1.0.3
+## Settings file was created by plugin LaserClearing v1.0.4
 ## Plugin GUID: starfi5h.plugin.LaserClearing
 
 [General]
 
-## Enable LaserClearing
+## Enable LaserClearing when starting the game
+## 进入游戏时启用激光
 # Setting type: Boolean
 # Default value: true
 Enable = true
 
-## Get drops from destroying trees and stones (including laser)
-## 破坏树木/石头时获取掉落物(包含激光)
+## Get drops from destroying trees and stones when enable laser
+## 启用激光时,破坏树木/石头时会获取掉落物
 # Setting type: Boolean
 # Default value: true
 EnableLoot = true
@@ -49,8 +51,8 @@ Range = 40
 ## Time to mine an object (tick)
 ## 开采所需时间
 # Setting type: Int32
-# Default value: 60
-MiningTick = 60
+# Default value: 90
+MiningTick = 90
 
 ## Interval to check objects in range (laser cool-down time)
 ## 检查周期(激光冷却时间)
