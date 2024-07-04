@@ -1,3 +1,10 @@
+### v1.0.5 (DSP-0.10.30.22292)
+\- Add config `Other`: `ScaleWithDroneCount`, `ScaleWithMiningSpeed`  
+\- Remove config `CheckIntervalTick`. It now set to MiningTick/(MaxLaserCount*2)  
+
+<details>
+<summary>Previous Changelog</summary>
+
 ### v1.0.4
 \- Collect drop from destroyed tree/stone only when laser is enable.  
 \- Config `General`: `Enable` has been set to false. `MiningTick` has been set to 90.  
@@ -16,6 +23,4 @@
 ### v1.0.0
 \- Initial release. (DSP-0.10.28.21172)  
 
-<details>
-<summary>Previous Changelog</summary>
 </details>

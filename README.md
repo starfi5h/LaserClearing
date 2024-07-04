@@ -11,7 +11,7 @@ Run the game one time to generate `BepInEx\config\starfi5h.plugin.LaserClearing.
 配置文件(.cfg)需要先运行过游戏一次才会出现。修改后需重启游戏才会生效。    
 
 ```
-## Settings file was created by plugin LaserClearing v1.0.4
+## Settings file was created by plugin LaserClearing v1.0.5
 ## Plugin GUID: starfi5h.plugin.LaserClearing
 
 [General]
@@ -19,8 +19,8 @@ Run the game one time to generate `BepInEx\config\starfi5h.plugin.LaserClearing.
 ## Enable LaserClearing when starting the game
 ## 进入游戏时启用激光
 # Setting type: Boolean
-# Default value: true
-Enable = true
+# Default value: false
+Enable = false
 
 ## Get drops from destroying trees and stones when enable laser
 ## 启用激光时,破坏树木/石头时会获取掉落物
@@ -31,8 +31,8 @@ EnableLoot = true
 ## Stop laser when there is not enough space in inventory
 ## 物品栏保留空位,当空间不足时停止激光
 # Setting type: Int32
-# Default value: 2
-RequiredSpace = 2
+# Default value: 5
+RequiredSpace = 5
 
 [Laser]
 
@@ -54,12 +54,6 @@ Range = 40
 # Default value: 90
 MiningTick = 90
 
-## Interval to check objects in range (laser cool-down time)
-## 检查周期(激光冷却时间)
-# Setting type: Int32
-# Default value: 20
-CheckIntervalTick = 20
-
 ## Power consumption per laser (kW)
 ## 激光耗能
 # Setting type: Single
@@ -73,6 +67,18 @@ MiningPower = 480
 # Setting type: Boolean
 # Default value: false
 EnableDestructionSFX = false
+
+## Scale laser count with (this ratio * consturction drone count)
+## >0时, 使激光数量随(科技无人机数量*此值)增长
+# Setting type: Single
+# Default value: 0
+ScaleWithDroneCount = 0
+
+## Scale mining tick with (this ratio * mining speed boost)
+## >0时, 使激光效率随(科技矿物采集速度*此值)增长
+# Setting type: Single
+# Default value: 0
+ScaleWithMiningSpeed = 0
 
 [Target]
 
