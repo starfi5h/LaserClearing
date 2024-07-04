@@ -9,19 +9,45 @@ namespace LaserClearing
     {
         public static bool Enable = true;
         public static bool EnableLoot = true;
-        public static int RequiredSpace = 2;
+        public static int RequiredSpace = 5;
         public static int MaxLaserCount = 3;
         public static float Range = 40f;
-        public static int MiningTick = 60;
-        public static int CheckIntervalTick = 20;
+        public static int MiningTick = 60;        
         public static double MiningPower = 6000; // 1000 per tick = 60kw in game
         public static bool DropOnly = true;
         public static bool SpaceCapsule = false;
         public static bool EnableDestructionSFX = false;
+        public static float ScaleWithDroneCount = 0f;
+        public static float ScaleWithMiningSpeed = 0f;
 
         static readonly Dictionary<int, bool> checkVeges = new(); // true: avaible target
         static readonly List<int> laserIds = new();
         static int factoryIndex = -1;
+        static int maxLaserCount = 3;
+        static int tickToClear = 60;
+        static int checkIntervalTick = 10;
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+        [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.NotifyTechUnlock))]
+        static void SetParameters()
+        {
+            maxLaserCount = MaxLaserCount;
+            if (ScaleWithDroneCount > 0f)
+            {
+                maxLaserCount = (int)(maxLaserCount * (GameMain.mainPlayer.mecha.constructionModule.droneCount) * ScaleWithDroneCount);
+            }
+            maxLaserCount = maxLaserCount > 0 ? maxLaserCount : 1;
+            tickToClear = MiningTick;
+            if (ScaleWithMiningSpeed > 0f)
+            {
+                tickToClear = (int)(tickToClear / (1 + (GameMain.history.miningSpeedScale - 1f) * ScaleWithMiningSpeed));
+            }
+            tickToClear = tickToClear > 0 ? tickToClear : 1;
+            checkIntervalTick = tickToClear / (maxLaserCount * 2);
+            checkIntervalTick  = checkIntervalTick > 0 ? checkIntervalTick : 1;
+            Plugin.Log.LogDebug($"maxLaserCount={maxLaserCount} tickToClear={tickToClear}");
+        }
 
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), nameof(PlayerAction_Mine.GameTick))]
         static void GameTick(PlayerAction_Mine __instance)
@@ -34,7 +60,7 @@ namespace LaserClearing
             Mecha mecha = __instance.player.mecha;
             Vector3 beginPos = mecha.skillCastRightL;
 
-            if (laserIds.Count < MaxLaserCount && GameMain.gameTick % CheckIntervalTick == 0)
+            if (laserIds.Count < maxLaserCount && GameMain.gameTick % checkIntervalTick == 0)
             {
                 if (CheckPlayerInventorySpace())
                 {
@@ -161,7 +187,7 @@ namespace LaserClearing
 
             int maxHp = SkillSystem.HpMaxByModelIndex[vegeData.modelIndex];
             int recoverHp = SkillSystem.HpRecoverByModelIndex[vegeData.modelIndex];
-            ptr.damage = (int)((maxHp / MiningTick + recoverHp) / 1.0f + 1); // Kill the tree/stones after MiningTick 
+            ptr.damage = (int)((maxHp / tickToClear + recoverHp) / 1.0f + 1); // Kill the tree/stones after MiningTick 
             ptr.damageScale = 1.0f; // TickSkillLogic: vfaudio.volumeMultiplier = Mathf.Min(1.5f, this.damageScale * 0.6f);
             ptr.mask = ETargetTypeMask.NotPlayer;
 
