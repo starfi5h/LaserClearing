@@ -101,7 +101,7 @@ namespace LaserClearing
             var spaceCount = 0;
             for (int i = GameMain.mainPlayer.package.size - 1; i >= 0; i--)
             {
-                if (grids[i].count == 0) ++spaceCount;
+                if (grids[i].count == 0 && grids[i].filter == 0) ++spaceCount;
                 if (spaceCount >= RequiredSpace) return true;
             }
             return false;

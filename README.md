@@ -11,7 +11,7 @@ Run the game one time to generate `BepInEx\config\starfi5h.plugin.LaserClearing.
 配置文件(.cfg)需要先运行过游戏一次才会出现。修改后需重启游戏才会生效。    
 
 ```
-## Settings file was created by plugin LaserClearing v1.0.5
+## Settings file was created by plugin LaserClearing
 ## Plugin GUID: starfi5h.plugin.LaserClearing
 
 [General]
