@@ -1,3 +1,6 @@
+### v1.0.7
+\- Adapt to game version 0.10.32.25779  
+
 ### v1.0.6 (DSP-0.10.30.23430)
 \- `RequiredSpace` now requires the empty slot to not have item filter too.  
 
