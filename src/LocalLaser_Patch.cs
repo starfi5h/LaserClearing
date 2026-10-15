@@ -30,8 +30,9 @@ namespace LaserClearing
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.NotifyTechUnlock))]
-        static void SetParameters()
+        public static void SetParameters()
         {
+            if (GameMain.data == null) return;
             maxLaserCount = MaxLaserCount;
             if (ScaleWithDroneCount > 0f)
             {
@@ -46,7 +47,7 @@ namespace LaserClearing
             tickToClear = tickToClear > 0 ? tickToClear : 1;
             checkIntervalTick = tickToClear / (maxLaserCount * 2);
             checkIntervalTick  = checkIntervalTick > 0 ? checkIntervalTick : 1;
-            Plugin.Log.LogDebug($"maxLaserCount={maxLaserCount} tickToClear={tickToClear}");
+            //Plugin.Log.LogDebug($"maxLaserCount={maxLaserCount} tickToClear={tickToClear}");
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), nameof(PlayerAction_Mine.GameTick))]

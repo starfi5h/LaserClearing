@@ -1,3 +1,6 @@
+### v1.0.8
+\- Compatible with OrbitalRing mod.  
+
 ### v1.0.7
 \- Adapt to game version 0.10.32.25779  
 

@@ -1,6 +1,8 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using System;
 using System.Reflection;
 
 [assembly: AssemblyTitle(LaserClearing.Plugin.NAME)]
@@ -15,7 +17,7 @@ namespace LaserClearing
     {
         public const string GUID = "starfi5h.plugin.LaserClearing";
         public const string NAME = "LaserClearing";
-        public const string VERSION = "1.0.7";
+        public const string VERSION = "1.0.8";
 
         public static Plugin Instance;
         public static ManualLogSource Log;
@@ -34,6 +36,11 @@ namespace LaserClearing
 #endif
         }
 
+        public void Start()
+        {
+            Compatibility.Start(harmony);
+        }
+
 #if DEBUG
         public void OnDestroy()
         {
@@ -46,22 +53,77 @@ namespace LaserClearing
 
         public static void LoadConfigs()
         {
-            LocalLaser_Patch.Enable = Instance.Config.Bind("General", "Enable", false, "Enable LaserClearing when starting the game\n进入游戏时启用激光").Value;
-            LocalLaser_Patch.EnableLoot = Instance.Config.Bind("General", "EnableLoot", true, "Get drops from destroying trees and stones when enable laser\n启用激光时,破坏树木/石头时会获取掉落物").Value;
-            LocalLaser_Patch.RequiredSpace = Instance.Config.Bind("General", "RequiredSpace", 5, "Stop laser when there is not enough space in inventory\n物品栏保留空位,当空间不足时停止激光").Value;
-            LocalLaser_Patch.MaxLaserCount = Instance.Config.Bind("Laser", "MaxCount", 3, "Maximum count of laser\n激光最大数量").Value;
-            LocalLaser_Patch.Range = Instance.Config.Bind("Laser", "Range", 40f, "Maximum range of laser\n激光最远距离").Value;
-            LocalLaser_Patch.MiningTick = Instance.Config.Bind("Laser", "MiningTick", 90, "Time to mine an object (tick)\n开采所需时间").Value;
-            //LocalLaser_Patch.CheckIntervalTick = Instance.Config.Bind("Laser", "CheckIntervalTick", 20, "Interval to check objects in range (laser cool-down time)\n检查周期(激光冷却时间)").Value;
-            LocalLaser_Patch.MiningPower = Instance.Config.Bind("Laser", "MiningPower", 480f, "Power consumption per laser (kW)\n激光耗能").Value / 60f * 1000f; // Vanilla: 640kW
-            LocalLaser_Patch.DropOnly = Instance.Config.Bind("Target", "DropOnly", true, "Targets only objects with available drop\n只清除有掉落物的植被").Value;
-            LocalLaser_Patch.SpaceCapsule = Instance.Config.Bind("Target", "SpaceCapsule", false, "Targets space capsule\n清除飞行仓").Value;
-            
-            LocalLaser_Patch.EnableDestructionSFX = Instance.Config.Bind("Other", "EnableDestructionSFX", false, "Play sounds when trees and stones get clear by laser\n激光清除树木/石头时播放音效").Value;
-            LocalLaser_Patch.ScaleWithDroneCount = Instance.Config.Bind("Other", "ScaleWithDroneCount", 0.0f, "Scale laser count with (this ratio * consturction drone count)\n>0时, 使激光数量随(科技无人机数量*此值)增长").Value;
-            LocalLaser_Patch.ScaleWithMiningSpeed = Instance.Config.Bind("Other", "ScaleWithMiningSpeed", 0.0f, "Scale mining tick with (this ratio * mining speed boost)\n>0时, 使激光效率随(科技矿物采集速度*此值)增长").Value;
+            BindLiveConfig("General", "Enable", false,
+                "Enable LaserClearing when starting the game\n进入游戏时启用激光",
+                v => LocalLaser_Patch.Enable = v);
 
-            Instance.Logger.LogDebug($"LoadConfigs drop:{LocalLaser_Patch.DropOnly}");
+            BindLiveConfig("General", "EnableLoot", true,
+                "Get drops from destroying trees and stones when enable laser\n启用激光时,破坏树木/石头时会获取掉落物",
+                v => LocalLaser_Patch.EnableLoot = v);
+
+            BindLiveConfig("General", "RequiredSpace", 5,
+                "Stop laser when there is not enough space in inventory\n物品栏保留空位,当空间不足时停止激光",
+                v => LocalLaser_Patch.RequiredSpace = v);
+
+            BindLiveConfig("Laser", "MaxCount", 3,
+                "Maximum count of laser\n激光最大数量",
+                v => { LocalLaser_Patch.MaxLaserCount = v; LocalLaser_Patch.SetParameters(); });
+
+            BindLiveConfig("Laser", "Range", 40f,
+                "Maximum range of laser\n激光最远距离",
+                v => LocalLaser_Patch.Range = v);
+
+            BindLiveConfig("Laser", "MiningTick", 90,
+                "Time to mine an object (tick)\n开采所需时间",
+                v => { LocalLaser_Patch.MiningTick = v; LocalLaser_Patch.SetParameters(); });
+
+            BindLiveConfig("Laser", "MiningPower", 640f,
+                "Power consumption per laser (kW)\n激光耗能(原版为640kW)",
+                v => LocalLaser_Patch.MiningPower = v / 60f * 1000f);
+
+            BindLiveConfig("Target", "DropOnly", true,
+                "Targets only objects with available drop\n只清除有掉落物的植被",
+                v => LocalLaser_Patch.DropOnly = v);
+
+            BindLiveConfig("Target", "SpaceCapsule", false,
+                "Targets space capsule\n清除飞行仓",
+                v => LocalLaser_Patch.SpaceCapsule = v);
+
+            BindLiveConfig("Other", "EnableDestructionSFX", false,
+                "Play sounds when trees and stones get clear by laser\n激光清除树木/石头时播放音效",
+                v => LocalLaser_Patch.EnableDestructionSFX = v);
+
+            BindLiveConfig("Other", "ScaleWithDroneCount", 0.0f,
+                "Scale laser count with (this ratio * construction drone count)\n>0时, 使激光数量随(科技无人机数量*此值)增长",
+                v => { LocalLaser_Patch.ScaleWithDroneCount = v; LocalLaser_Patch.SetParameters(); });
+
+            BindLiveConfig("Other", "ScaleWithMiningSpeed", 0.0f,
+                "Scale mining tick with (this ratio * mining speed boost)\n>0时, 使激光效率随(科技矿物采集速度*此值)增长",
+                v => { LocalLaser_Patch.ScaleWithMiningSpeed = v; LocalLaser_Patch.SetParameters(); });
+        }
+
+        private static ConfigEntry<T> BindLiveConfig<T>(
+            string section,
+            string key,
+            T defaultValue,
+            string description,
+            Action<T> apply)
+        {
+            var entry = Instance.Config.Bind(
+                section, key, defaultValue, description);
+
+            // 套用初始設定值
+            apply(entry.Value);
+
+            // Configuration Manager 修改設定時立即更新
+            entry.SettingChanged += (_, __) =>
+            {
+                apply(entry.Value);
+                Instance.Logger.LogDebug(
+                    $"Config changed: {section}.{key} = {entry.Value}");
+            };
+
+            return entry;
         }
     }
 }

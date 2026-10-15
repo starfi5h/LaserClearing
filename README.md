@@ -55,10 +55,10 @@ Range = 40
 MiningTick = 90
 
 ## Power consumption per laser (kW)
-## 激光耗能
+## 激光耗能(原版为640kW)
 # Setting type: Single
-# Default value: 480
-MiningPower = 480
+# Default value: 640
+MiningPower = 640
 
 [Other]
 
